@@ -1,6 +1,8 @@
 from backend.embeddings import embed_question
 from backend.vector_store import search_chunks
 from backend.vector_store import get_collection
+from backend.reranker import rerank_results
+
 
 test_cases = [
     {
@@ -57,6 +59,41 @@ for test in test_cases:
         print(f"Expected: {test['expected_function']}")
         print(f"Retrieved: {retrieved_names}")
         print()
+
+def evaluate_reranking(test_cases: list, k: int = 3):
+    correct = 0
+
+    for test in test_cases:
+        question = test["question"]
+        expected = test["expected_function"]
+
+        embedded_question = embed_question(question)
+
+        results = search_chunks(embedded_question, 20)
+
+        reranked_chunks = rerank_results(question, results, k)
+        
+        names = []
+        for chunk in reranked_chunks:
+            names.append(chunk["metadata"]["name"])
+
+        print(f"\nQuestion: {question}")
+        print(f"Expected: {expected}")
+        print(f"Retrieved: {names}")
+
+        if expected in names:
+            correct += 1
+            print("Result: PASS")
+        else:
+            print("Result: FAIL")
+
+    total = len(test_cases)
+    accuracy = (correct / total) * 100 if total > 0 else 0
+
+    print(f"\nHit@{k}: {accuracy:.1f}%")
+    print(f"Correct: {correct}/{total}")
+
+    return accuracy
 
 hit_3 = (correct/total) * 100
 print(f"Hit@3: {hit_3:.1f}%")
