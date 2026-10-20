@@ -2,10 +2,14 @@ import chromadb
 from backend.embeddings import embed_chunks, embed_question
 from backend.retrieval import retrieve_chunks
 from chromadb.errors import ChromaError
+from pathlib import Path
 
 def get_collection():
-    Chroma = chromadb.PersistentClient(path = "./data/chroma")
-    collection = Chroma.get_or_create_collection(name="repomind_code")
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    CHROMA_PATH = PROJECT_ROOT / "data" / "chroma"
+
+    client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+    collection = client.get_or_create_collection(name="repomind_code")
 
     return collection
 

@@ -8,7 +8,7 @@ def test_integration():
     print("\n===== REPOMIND DAY 7 INTEGRATION TEST =====")
 
     # Change this to the repository you want to test
-    repo_path = Path(r"C:\College\Job_hunt\Practice\RepoMind")
+    repo_path = Path(__file__).resolve().parents[1]
 
     print(f"\nLoading repository: {repo_path}")
 
