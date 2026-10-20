@@ -1,6 +1,7 @@
 from backend.embeddings import embed_question
 from backend.vector_store import search_chunks
 from backend.llm import ask_llm
+from backend.reranker import rerank_results
 
 
 def build_context(results):
@@ -24,12 +25,28 @@ def build_context(results):
 
     return "\n\n".join(sections)
 
-def answer_question(question: str, k=3):
+def retrieve_context(question: str, k: int = 3) -> str:
     embedded_question = embed_question(question)
-    searching = search_chunks(embedded_question, k) 
-    context = build_context(searching)
+    results = search_chunks(embedded_question, k=20)
+
+    if not results.get("documents") or not results["documents"][0]:
+        return ""
+
+    ranked = rerank_results(question, results, top_k=k) 
+    reranked_results = {
+        "documents": [[item["document"] for item in ranked]],
+        "metadatas": [[item["metadata"] for item in ranked]]
+    }
+
+    return build_context(reranked_results)
+
+def answer_question(question: str, k=3):
+
+    context = retrieve_context(question, k)
+
     if context == "":
-        return "No respository context available"
+        return "No repository context available"
+
     prompt = f"""
     You are RepoMind, an AI codebase assistant.
 

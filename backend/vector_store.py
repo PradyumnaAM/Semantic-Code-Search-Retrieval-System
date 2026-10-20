@@ -1,6 +1,7 @@
 import chromadb
 from backend.embeddings import embed_chunks, embed_question
 from backend.retrieval import retrieve_chunks
+from chromadb.errors import ChromaError
 
 def get_collection():
     Chroma = chromadb.PersistentClient(path = "./data/chroma")
@@ -50,20 +51,24 @@ def store_chunks(embedded_chunks):
     return len(ids)
 
 def search_chunks(question_embedding, k=5):
-    collection = get_collection()
-    if collection.count() == 0:
-        return {
-            "documents": [[]],
-            "metadatas": [[]],
-            "distances": [[]]
-        }
+    try:
+        collection = get_collection()
+        if collection.count() == 0:
+            return {
+                "documents": [[]],
+                "metadatas": [[]],
+                "distances": [[]]
+            }
 
-    results = collection.query(
-        query_embeddings= [question_embedding.tolist()],
-        n_results = min(k, collection.count()),
-        include = ["documents","metadatas","distances"]
-    )
-    return results
+        results = collection.query(
+            query_embeddings= [question_embedding.tolist()],
+            n_results = min(k, collection.count()),
+            include = ["documents","metadatas","distances"]
+        )
+
+        return results 
+    except ChromaError:
+        raise 
 
 def reset_storage():
     Chroma = chromadb.PersistentClient(path = "./data/chroma")
